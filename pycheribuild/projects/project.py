@@ -2073,6 +2073,7 @@ class DefaultInstallDir(Enum):
     KDE_PREFIX = "The sysroot for this target (<rootfs>/opt/<arch>/kde by default)"
     COMPILER_RESOURCE_DIR = "The compiler resource directory"
     CHERI_SDK = "The CHERI SDK directory"
+    BSD_USER_SDK = "The QEMU BSD user mode SDK directory"
     MORELLO_SDK = "The Morello SDK directory"
     BOOTSTRAP_TOOLS = "The bootstap tools directory"
     CUSTOM_INSTALL_DIR = "Custom install directory"
@@ -2117,6 +2118,10 @@ def _default_install_dir_handler(config: CheriConfig, project: "Project") -> Pat
         assert not project.compiling_for_host(), "ROOTFS_LOCALBASE is only a valid install dir for cross-builds, " \
                                                  "use BOOTSTRAP_TOOLS/CUSTOM_INSTALL_DIR/IN_BUILD_DIRECTORY for native"
         return project.sdk_sysroot
+    elif install_dir == DefaultInstallDir.BSD_USER_SDK:
+        assert project.compiling_for_host(), "BSD_USER_SDK is only a valid install dir for native, " \
+                                             "use ROOTFS_LOCALBASE/ROOTFS_OPTBASE for cross"
+        return config.bsd_user_sdk_dir
     elif install_dir == DefaultInstallDir.CHERI_SDK:
         assert project.compiling_for_host(), "CHERI_SDK is only a valid install dir for native, " \
                                              "use ROOTFS_LOCALBASE/ROOTFS_OPTBASE for cross"

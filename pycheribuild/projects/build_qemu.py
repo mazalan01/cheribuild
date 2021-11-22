@@ -50,6 +50,7 @@ class BuildQEMUBase(AutotoolsProject):
     can_build_with_asan = True
     default_targets = "some-invalid-target"
     default_build_type = BuildType.RELEASE
+    default_use_smbd = True
     lto_by_default = True
 
     @classmethod
@@ -65,7 +66,7 @@ class BuildQEMUBase(AutotoolsProject):
     @classmethod
     def setup_config_options(cls, **kwargs):
         super().setup_config_options(**kwargs)
-        cls.use_smbd = cls.add_bool_option("use-smbd", show_help=False, default=True,
+        cls.use_smbd = cls.add_bool_option("use-smbd", show_help=False, default=cls.default_use_smbd,
                                            help="Don't require SMB support when building QEMU (warning: most --test "
                                                 "targets will fail without smbd support)")
 
@@ -351,6 +352,36 @@ class BuildQEMU(BuildQEMUBase):
                 "--cross-cc-cflags-riscv64=" + self.commandline_to_str(
                     tgt_info_riscv64.get_essential_compiler_and_linker_flags()).replace("=", " ")
             ])
+
+
+class BuildBsdUserQEMU(BuildQEMU):
+    repository = GitRepository("https://github.com/CTSRD-CHERI/qemu.git",
+                               default_branch="qemu-cheri-bsd-user",
+                               force_branch=True)
+    native_install_dir = DefaultInstallDir.BSD_USER_SDK
+    default_targets = "riscv64cheri-bsd-user"
+    default_use_smbd = False
+    target = "bsd-user-qemu"
+    hide_options_from_help = True
+
+    @classmethod
+    def qemu_cheri_binary(cls, caller: SimpleProject, xtarget: CrossCompileTarget = None):
+        if xtarget is None:
+            xtarget = caller.get_crosscompile_target(caller.config)
+        if xtarget.is_riscv(include_purecap=True):
+            binary_name = "qemu-riscv64cheri"
+        else:
+            raise ValueError("Invalid xtarget" + str(xtarget))
+        return caller.config.bsd_user_qemu_bindir / os.getenv("QEMU_BSD_USER_PATH", binary_name)
+
+    def setup(self):
+        super().setup()
+        # Disable RVFI-DDI unsupported in the user mode.
+        self.configure_args.append("--disable-rvfi-dii")
+        # Enable to build BSD user mode targets.
+        self.configure_args.append("--enable-bsd-user")
+        # Build a static binary that can be easily included in a guest jail.
+        self.configure_args.append("--static")
 
 
 class BuildMorelloQEMU(BuildQEMU):
