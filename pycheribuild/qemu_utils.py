@@ -39,8 +39,7 @@ from .utils import OSInfo, warning_message
 
 
 class QemuOptions:
-    def __init__(self, xtarget: CrossCompileTarget, want_debugger=False,
-            is_system_mode=True):
+    def __init__(self, xtarget: CrossCompileTarget, want_debugger=False, is_system_mode=True):
         self.xtarget = xtarget
         self.virtio_disk = True
         self.force_virtio_blk_device = False
@@ -159,10 +158,10 @@ class QemuOptions:
         return [str(qemu_command)]
 
     def get_system_commandline(self, *, qemu_command=None, kernel_file: Path = None, disk_image: Path = None,
-                        disk_image_format: str = "raw", user_network_args: str = "", add_network_device=True,
-                        bios_args: "typing.List[str]" = None, trap_on_unrepresentable=False,
-                        debugger_on_cheri_trap=False, add_virtio_rng=False, write_disk_image_changes=True,
-                        gui_options: "typing.List[str]" = None) -> "typing.List[str]":
+                               disk_image_format: str = "raw", user_network_args: str = "", add_network_device=True,
+                               bios_args: "typing.List[str]" = None, trap_on_unrepresentable=False,
+                               debugger_on_cheri_trap=False, add_virtio_rng=False, write_disk_image_changes=True,
+                               gui_options: "typing.List[str]" = None) -> "typing.List[str]":
         result = self.get_common_commandline()
         result.extend(self.machine_flags)
         result.extend(["-m", self.memory_size])
