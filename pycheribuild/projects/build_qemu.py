@@ -203,7 +203,6 @@ class BuildQEMUBase(AutotoolsProject):
             "--target-list=" + self.qemu_targets,
             "--enable-slirp=git",
             "--disable-linux-user",
-            "--disable-bsd-user",
             "--disable-xen",
             "--disable-docs",
             "--disable-rdma",
@@ -241,8 +240,17 @@ class BuildQEMUBase(AutotoolsProject):
         super().update()
 
 
+class BuildSystemQEMU(BuildQEMUBase):
+    do_not_add_to_targets = True
+
+    def setup(self):
+        super().setup()
+        # Don't build BSD user mode targets as we only want system mode binaries.
+        self.configure_args.append("--disable-bsd-user")
+
+
 # noinspection PyAbstractClass
-class BuildUpstreamQEMU(BuildQEMUBase):
+class BuildUpstreamQEMU(BuildSystemQEMU):
     repository = GitRepository("https://github.com/qemu/qemu.git")
     target = "upstream-qemu"
     _default_install_dir_fn = ComputedDefaultValue(
@@ -271,7 +279,7 @@ class BuildUpstreamQEMU(BuildQEMUBase):
         return config.output_root / "upstream-qemu/bin" / binary_name
 
 
-class BuildQEMU(BuildQEMUBase):
+class BuildQEMU(BuildSystemQEMU):
     target = "qemu"
     repository = GitRepository("https://github.com/CTSRD-CHERI/qemu.git", default_branch="qemu-cheri")
     default_targets = "mips64-softmmu,mips64cheri128-softmmu," \
@@ -354,7 +362,7 @@ class BuildQEMU(BuildQEMUBase):
             ])
 
 
-class BuildBsdUserQEMU(BuildQEMU):
+class BuildBsdUserQEMU(BuildQEMUBase):
     repository = GitRepository("https://github.com/CTSRD-CHERI/qemu.git",
                                default_branch="qemu-cheri-bsd-user",
                                force_branch=True)
@@ -379,6 +387,8 @@ class BuildBsdUserQEMU(BuildQEMU):
 
     def setup(self):
         super().setup()
+        # Disable capstone disassembler unsupporting CHERI instructions.
+        self.configure_args.append("--disable-capstone")
         # Disable RVFI-DDI unsupported in the user mode.
         self.configure_args.append("--disable-rvfi-dii")
         # Enable to build BSD user mode targets.
@@ -387,7 +397,7 @@ class BuildBsdUserQEMU(BuildQEMU):
         self.configure_args.append("--static")
 
 
-class BuildMorelloQEMU(BuildQEMU):
+class BuildMorelloQEMU(BuildSystemQEMU):
     repository = GitRepository("https://github.com/CTSRD-CHERI/qemu.git", default_branch="qemu-morello-merged",
                                force_branch=True,
                                old_urls=[
