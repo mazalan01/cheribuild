@@ -34,7 +34,8 @@ import tempfile
 from pathlib import Path
 
 from .crosscompileproject import (BenchmarkMixin, CompilationTargets, CrossCompileAutotoolsProject,
-                                  CrossCompileProject, DefaultInstallDir, GitRepository, MakeCommandKind)
+                                  CrossCompileProject, DefaultInstallDir, GitRepository, MakeCommandKind,
+                                  CrossCompileCMakeProject)
 from .llvm_test_suite import BuildLLVMTestSuite, BuildLLVMTestSuiteBase
 from ..project import ExternallyManagedSourceRepository, ReuseOtherProjectRepository
 from ...config.target_info import CPUArchitecture
@@ -810,3 +811,14 @@ class NetPerfBench(BenchmarkMixin, CrossCompileAutotoolsProject):
 
     def install(self, **kwargs):
         self.run_make_install()
+
+
+class PostmarkBench(BenchmarkMixin, CrossCompileCMakeProject):
+    repository = GitRepository("git@github.com:CTSRD-CHERI/cheri-postmark", default_branch="master")
+    target = "postmark"
+    native_install_dir = DefaultInstallDir.IN_BUILD_DIRECTORY
+    cross_install_dir = DefaultInstallDir.ROOTFS_OPTBASE
+    # The makefiles here can't support any other other tagets:
+    supported_architectures = [CompilationTargets.CHERIBSD_RISCV_NO_CHERI,
+                               CompilationTargets.CHERIBSD_RISCV_HYBRID,
+                               CompilationTargets.CHERIBSD_RISCV_PURECAP]
