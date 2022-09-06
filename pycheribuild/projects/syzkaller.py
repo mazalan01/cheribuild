@@ -239,6 +239,8 @@ class RunSyzkallerBase(SimpleProject):
                                               help="Working directory for syzkaller output.", metavar="DIR")
         cls.syz_debug = cls.add_bool_option("debug",
                                             help="Run syz-manager in debug mode, requires manual startup of the VM.")
+        cls.syz_reproduce = cls.add_bool_option("dont-reproduce", show_help=True,
+                                                help="Disable syzkaller reproducing crashes")
 
     def syzkaller_config(self):
         """ Get path of syzkaller configuration file to use. """
@@ -272,6 +274,7 @@ class RunSyzkallerBase(SimpleProject):
                 "sandbox": "none",
                 "procs": 1,
                 "image": str(disk_image),
+                "reproduce": not self.syz_reproduce,
                 "type": "",
                 "vm": {}
                 }
